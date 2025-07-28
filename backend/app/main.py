@@ -26,12 +26,35 @@ async def root():
 async def health_check():
     try:
         from .database import engine
+        import os
+        
+        # 환경 변수 확인
+        database_url = os.getenv("DATABASE_URL", "Not set")
+        
         # 데이터베이스 연결 테스트
         with engine.connect() as conn:
             result = conn.execute("SELECT 1")
-        return {"status": "healthy", "database": "connected", "timestamp": "2024-01-01T00:00:00Z"}
+            
+        # 프롬프트 테이블 확인
+        with engine.connect() as conn:
+            result = conn.execute("SELECT COUNT(*) FROM prompt")
+            prompt_count = result.scalar()
+            
+        return {
+            "status": "healthy", 
+            "database": "connected",
+            "database_url": database_url[:50] + "..." if len(database_url) > 50 else database_url,
+            "prompt_table_count": prompt_count,
+            "timestamp": "2024-01-01T00:00:00Z"
+        }
     except Exception as e:
-        return {"status": "unhealthy", "database": "disconnected", "error": str(e), "timestamp": "2024-01-01T00:00:00Z"}
+        return {
+            "status": "unhealthy", 
+            "database": "disconnected", 
+            "error": str(e), 
+            "database_url": os.getenv("DATABASE_URL", "Not set"),
+            "timestamp": "2024-01-01T00:00:00Z"
+        }
 
 @app.options("/{path:path}")
 async def options_handler(path: str):

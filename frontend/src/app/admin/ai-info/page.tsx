@@ -155,8 +155,10 @@ export default function AdminAIInfoPage() {
       setPromptEditId(null)
       setSuccess('프롬프트가 저장되었습니다!')
     },
-    onError: () => {
-      setError('프롬프트 저장에 실패했습니다.')
+    onError: (error: any) => {
+      console.error('Prompt error:', error)
+      const errorMessage = error?.response?.data?.detail || error?.message || '프롬프트 저장에 실패했습니다.'
+      setError(`프롬프트 저장 실패: ${errorMessage}`)
     }
   })
 
@@ -169,8 +171,10 @@ export default function AdminAIInfoPage() {
       refetchPrompts()
       setSuccess('프롬프트가 삭제되었습니다!')
     },
-    onError: () => {
-      setError('프롬프트 삭제에 실패했습니다.')
+    onError: (error: any) => {
+      console.error('Prompt delete error:', error)
+      const errorMessage = error?.response?.data?.detail || error?.message || '프롬프트 삭제에 실패했습니다.'
+      setError(`프롬프트 삭제 실패: ${errorMessage}`)
     }
   })
 
