@@ -7,13 +7,20 @@ from .api import ai_info, quiz, prompt, base_content, term, auth, logs, system
 
 app = FastAPI()
 
-# CORS 설정 - Railway 배포 환경에 맞게 조정 (임시로 관대한 설정)
+# Railway 배포 환경을 위한 CORS 설정
+origins = [
+    "http://localhost:3000",
+    "https://simple-production-b0b3.up.railway.app",
+    "https://simple-production-142c.up.railway.app",
+    "*"  # 모든 origin 허용 (개발 중)
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 임시로 모든 origin 허용
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],  # 모든 메서드 허용
-    allow_headers=["*"],  # 모든 헤더 허용
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
     expose_headers=["*"],
 )
 

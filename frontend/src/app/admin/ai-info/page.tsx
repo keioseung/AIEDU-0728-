@@ -157,7 +157,18 @@ export default function AdminAIInfoPage() {
     },
     onError: (error: any) => {
       console.error('Prompt error:', error)
-      const errorMessage = error?.response?.data?.detail || error?.message || '프롬프트 저장에 실패했습니다.'
+      console.error('Error response:', error?.response)
+      console.error('Error data:', error?.response?.data)
+      
+      let errorMessage = '프롬프트 저장에 실패했습니다.'
+      if (error?.response?.data?.detail) {
+        errorMessage = error.response.data.detail
+      } else if (error?.response?.data?.error) {
+        errorMessage = error.response.data.error
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      
       setError(`프롬프트 저장 실패: ${errorMessage}`)
     }
   })
@@ -173,7 +184,18 @@ export default function AdminAIInfoPage() {
     },
     onError: (error: any) => {
       console.error('Prompt delete error:', error)
-      const errorMessage = error?.response?.data?.detail || error?.message || '프롬프트 삭제에 실패했습니다.'
+      console.error('Error response:', error?.response)
+      console.error('Error data:', error?.response?.data)
+      
+      let errorMessage = '프롬프트 삭제에 실패했습니다.'
+      if (error?.response?.data?.detail) {
+        errorMessage = error.response.data.detail
+      } else if (error?.response?.data?.error) {
+        errorMessage = error.response.data.error
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      
       setError(`프롬프트 삭제 실패: ${errorMessage}`)
     }
   })

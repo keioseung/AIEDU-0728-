@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 from typing import List
 import logging
+import traceback
 
 from ..database import get_db
 from ..models import Prompt
@@ -16,10 +17,13 @@ logger = logging.getLogger(__name__)
 @router.get("/", response_model=List[PromptResponse])
 def get_all_prompts(db: Session = Depends(get_db)):
     try:
+        logger.info("Getting all prompts...")
         prompts = db.query(Prompt).order_by(Prompt.created_at.desc()).all()
+        logger.info(f"Found {len(prompts)} prompts")
         return prompts
     except Exception as e:
         logger.error(f"Error getting prompts: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Failed to get prompts: {str(e)}")
 
 @router.post("/", response_model=PromptResponse)
@@ -61,6 +65,7 @@ def add_prompt(prompt_data: PromptCreate, db: Session = Depends(get_db)):
             logger.info(f"Created Prompt object: {db_prompt}")
         except Exception as create_error:
             logger.error(f"Error creating Prompt object: {create_error}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
             raise HTTPException(status_code=500, detail=f"Error creating Prompt object: {str(create_error)}")
         
         # 데이터베이스에 추가
@@ -69,6 +74,7 @@ def add_prompt(prompt_data: PromptCreate, db: Session = Depends(get_db)):
             logger.info("Added prompt to session")
         except Exception as add_error:
             logger.error(f"Error adding prompt to session: {add_error}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
             raise HTTPException(status_code=500, detail=f"Error adding prompt to session: {str(add_error)}")
         
         # 커밋
@@ -77,6 +83,7 @@ def add_prompt(prompt_data: PromptCreate, db: Session = Depends(get_db)):
             logger.info("Committed to database")
         except Exception as commit_error:
             logger.error(f"Error committing to database: {commit_error}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
             db.rollback()
             raise HTTPException(status_code=500, detail=f"Error committing to database: {str(commit_error)}")
         
@@ -95,7 +102,6 @@ def add_prompt(prompt_data: PromptCreate, db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"Unexpected error adding prompt: {e}")
         logger.error(f"Error type: {type(e)}")
-        import traceback
         logger.error(f"Traceback: {traceback.format_exc()}")
         try:
             db.rollback()
