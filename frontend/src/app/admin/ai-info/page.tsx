@@ -142,6 +142,7 @@ export default function AdminAIInfoPage() {
   // 프롬프트 추가/수정
   const promptMutation = useMutation({
     mutationFn: async (data: { title: string; content: string; id?: number }) => {
+      console.log('Sending prompt data:', data)
       if (data.id) {
         return promptAPI.update(data.id, { title: data.title, content: data.content, category: 'default' })
       } else {
@@ -156,20 +157,27 @@ export default function AdminAIInfoPage() {
       setSuccess('프롬프트가 저장되었습니다!')
     },
     onError: (error: any) => {
-      console.error('Prompt error:', error)
-      console.error('Error response:', error?.response)
-      console.error('Error data:', error?.response?.data)
+      console.error('Prompt error details:', {
+        message: error?.message,
+        response: error?.response?.data,
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        url: error?.config?.url,
+        method: error?.config?.method,
+        data: error?.config?.data
+      })
       
       let errorMessage = '프롬프트 저장에 실패했습니다.'
+      
       if (error?.response?.data?.detail) {
-        errorMessage = error.response.data.detail
+        errorMessage = `프롬프트 저장 실패: ${error.response.data.detail}`
       } else if (error?.response?.data?.error) {
-        errorMessage = error.response.data.error
+        errorMessage = `프롬프트 저장 실패: ${error.response.data.error}`
       } else if (error?.message) {
-        errorMessage = error.message
+        errorMessage = `프롬프트 저장 실패: ${error.message}`
       }
       
-      setError(`프롬프트 저장 실패: ${errorMessage}`)
+      setError(errorMessage)
     }
   })
 

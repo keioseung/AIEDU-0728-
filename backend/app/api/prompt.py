@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 import logging
 import traceback
+import sys
 
 from ..database import get_db
 from ..models import Prompt
@@ -52,6 +53,7 @@ def add_prompt(prompt_data: PromptCreate, db: Session = Depends(get_db)):
             logger.info("Database connection successful")
         except Exception as db_error:
             logger.error(f"Database connection failed: {db_error}")
+            logger.error(f"Database error traceback: {traceback.format_exc()}")
             raise HTTPException(status_code=500, detail=f"Database connection failed: {str(db_error)}")
         
         # Prompt 객체 생성
@@ -65,7 +67,7 @@ def add_prompt(prompt_data: PromptCreate, db: Session = Depends(get_db)):
             logger.info(f"Created Prompt object: {db_prompt}")
         except Exception as create_error:
             logger.error(f"Error creating Prompt object: {create_error}")
-            logger.error(f"Traceback: {traceback.format_exc()}")
+            logger.error(f"Create error traceback: {traceback.format_exc()}")
             raise HTTPException(status_code=500, detail=f"Error creating Prompt object: {str(create_error)}")
         
         # 데이터베이스에 추가
@@ -74,7 +76,7 @@ def add_prompt(prompt_data: PromptCreate, db: Session = Depends(get_db)):
             logger.info("Added prompt to session")
         except Exception as add_error:
             logger.error(f"Error adding prompt to session: {add_error}")
-            logger.error(f"Traceback: {traceback.format_exc()}")
+            logger.error(f"Add error traceback: {traceback.format_exc()}")
             raise HTTPException(status_code=500, detail=f"Error adding prompt to session: {str(add_error)}")
         
         # 커밋
@@ -83,7 +85,7 @@ def add_prompt(prompt_data: PromptCreate, db: Session = Depends(get_db)):
             logger.info("Committed to database")
         except Exception as commit_error:
             logger.error(f"Error committing to database: {commit_error}")
-            logger.error(f"Traceback: {traceback.format_exc()}")
+            logger.error(f"Commit error traceback: {traceback.format_exc()}")
             db.rollback()
             raise HTTPException(status_code=500, detail=f"Error committing to database: {str(commit_error)}")
         
@@ -102,7 +104,7 @@ def add_prompt(prompt_data: PromptCreate, db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"Unexpected error adding prompt: {e}")
         logger.error(f"Error type: {type(e)}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
+        logger.error(f"Full traceback: {traceback.format_exc()}")
         try:
             db.rollback()
         except:
@@ -175,6 +177,7 @@ def test_database_connection(db: Session = Depends(get_db)):
         return {"message": "Database connection successful", "test_result": result.scalar()}
     except Exception as e:
         logger.error(f"Database test failed: {e}")
+        logger.error(f"Database test traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Database test failed: {str(e)}")
 
 @router.options("/")
