@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 from typing import List
+import logging
+import traceback
 
 from ..database import get_db
 from ..models import BaseContent
@@ -8,10 +10,21 @@ from ..schemas import BaseContentCreate, BaseContentResponse
 
 router = APIRouter()
 
+# 로깅 설정
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 @router.get("/", response_model=List[BaseContentResponse])
 def get_all_base_contents(db: Session = Depends(get_db)):
-    contents = db.query(BaseContent).order_by(BaseContent.created_at.desc()).all()
-    return contents
+    try:
+        logger.info("Getting all base contents...")
+        contents = db.query(BaseContent).order_by(BaseContent.created_at.desc()).all()
+        logger.info(f"Found {len(contents)} base contents")
+        return contents
+    except Exception as e:
+        logger.error(f"Error getting base contents: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Failed to get base contents: {str(e)}")
 
 @router.options("/")
 def options_base_content():
@@ -19,44 +32,90 @@ def options_base_content():
 
 @router.post("/", response_model=BaseContentResponse)
 def add_base_content(content_data: BaseContentCreate, db: Session = Depends(get_db)):
-    from datetime import datetime
-    
-    db_content = BaseContent(
-        title=content_data.title,
-        content=content_data.content,
-        category=content_data.category,
-        created_at=datetime.now()
-    )
-    db.add(db_content)
-    db.commit()
-    db.refresh(db_content)
-    return db_content
+    try:
+        from datetime import datetime
+        
+        logger.info(f"Adding base content: {content_data.title}")
+        
+        # 입력 데이터 검증
+        if not content_data.title or not content_data.title.strip():
+            raise HTTPException(status_code=400, detail="Title is required")
+        
+        if not content_data.content or not content_data.content.strip():
+            raise HTTPException(status_code=400, detail="Content is required")
+        
+        if not content_data.category or not content_data.category.strip():
+            content_data.category = "default"
+        
+        db_content = BaseContent(
+            title=content_data.title.strip(),
+            content=content_data.content.strip(),
+            category=content_data.category.strip(),
+            created_at=datetime.now()
+        )
+        db.add(db_content)
+        db.commit()
+        db.refresh(db_content)
+        logger.info(f"Base content added successfully: {db_content.id}")
+        return db_content
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error adding base content: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to add base content: {str(e)}")
 
 @router.put("/{content_id}", response_model=BaseContentResponse)
 def update_base_content(content_id: int, content_data: BaseContentCreate, db: Session = Depends(get_db)):
-    content = db.query(BaseContent).filter(BaseContent.id == content_id).first()
-    if not content:
-        raise HTTPException(status_code=404, detail="Base content not found")
-    
-    content.title = content_data.title
-    content.content = content_data.content
-    content.category = content_data.category
-    
-    db.commit()
-    db.refresh(content)
-    return content
+    try:
+        logger.info(f"Updating base content: {content_id}")
+        content = db.query(BaseContent).filter(BaseContent.id == content_id).first()
+        if not content:
+            raise HTTPException(status_code=404, detail="Base content not found")
+        
+        content.title = content_data.title
+        content.content = content_data.content
+        content.category = content_data.category
+        
+        db.commit()
+        db.refresh(content)
+        logger.info(f"Base content updated successfully: {content_id}")
+        return content
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating base content: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to update base content: {str(e)}")
 
 @router.delete("/{content_id}")
 def delete_base_content(content_id: int, db: Session = Depends(get_db)):
-    content = db.query(BaseContent).filter(BaseContent.id == content_id).first()
-    if not content:
-        raise HTTPException(status_code=404, detail="Base content not found")
-    
-    db.delete(content)
-    db.commit()
-    return {"message": "Base content deleted successfully"}
+    try:
+        logger.info(f"Deleting base content: {content_id}")
+        content = db.query(BaseContent).filter(BaseContent.id == content_id).first()
+        if not content:
+            raise HTTPException(status_code=404, detail="Base content not found")
+        
+        db.delete(content)
+        db.commit()
+        logger.info(f"Base content deleted successfully: {content_id}")
+        return {"message": "Base content deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting base content: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to delete base content: {str(e)}")
 
 @router.get("/category/{category}", response_model=List[BaseContentResponse])
 def get_base_contents_by_category(category: str, db: Session = Depends(get_db)):
-    contents = db.query(BaseContent).filter(BaseContent.category == category).all()
-    return contents 
+    try:
+        logger.info(f"Getting base contents by category: {category}")
+        contents = db.query(BaseContent).filter(BaseContent.category == category).all()
+        logger.info(f"Found {len(contents)} base contents in category: {category}")
+        return contents
+    except Exception as e:
+        logger.error(f"Error getting base contents by category: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Failed to get base contents by category: {str(e)}") 
