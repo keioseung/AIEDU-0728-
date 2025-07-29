@@ -87,8 +87,8 @@ export default function DashboardPage() {
     return 'default'
   })
   const { data: aiInfo, isLoading: aiInfoLoading } = useAIInfo(selectedDate)
-  const { data: userProgress, isLoading: progressLoading } = useUserProgress(sessionId)
-  const { data: userStats } = useUserStats(sessionId)
+  const { data: userProgress, isLoading: progressLoading, refetch: refetchUserProgress } = useUserProgress(sessionId)
+  const { data: userStats, refetch: refetchUserStats } = useUserStats(sessionId)
   const router = useRouter()
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState<'ai' | 'quiz' | 'progress' | 'term'>('ai')
@@ -133,6 +133,12 @@ export default function DashboardPage() {
     return () => clearInterval(interval)
   }, [welcomeMessages.length])
 
+  // selectedDate가 변경될 때 데이터 리페치
+  useEffect(() => {
+    refetchUserProgress()
+    refetchUserStats()
+  }, [selectedDate, refetchUserProgress, refetchUserStats])
+
   useEffect(() => {
     const userStr = localStorage.getItem('currentUser')
     if (!userStr) {
@@ -169,8 +175,34 @@ export default function DashboardPage() {
   const learnedAIInfo = Math.max(localProgress.length, backendProgress.length)
   const aiInfoProgress = totalAIInfo > 0 ? (learnedAIInfo / totalAIInfo) * 100 : 0
 
+  // 실제 학습한 용어 개수 계산 - 백엔드 데이터와 로컬 데이터 통합
   const totalTerms = 60 // 3개 AI 정보 × 20개 용어씩
-  const learnedTerms = Array.isArray(userProgress?.total_terms_learned) ? userProgress.total_terms_learned.length : (userProgress?.total_terms_learned ?? 0)
+  const learnedTermsFromBackend = Array.isArray(userProgress?.total_terms_learned) ? userProgress.total_terms_learned.length : (userProgress?.total_terms_learned ?? 0)
+  
+  // 로컬 스토리지에서 학습한 용어 개수 계산
+  const localTermsCount = (() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('userProgress')
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          const userData = parsed[sessionId]
+          if (userData && userData.terms_by_date) {
+            // 모든 날짜의 용어 개수 합계
+            return Object.values(userData.terms_by_date).reduce((total: number, terms: any) => {
+              return total + (Array.isArray(terms) ? terms.length : 0)
+            }, 0)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to parse local terms:', error)
+      }
+    }
+    return 0
+  })()
+  
+  // 백엔드와 로컬 데이터 중 더 큰 값 사용
+  const learnedTerms = Math.max(learnedTermsFromBackend, localTermsCount)
   const termsProgress = totalTerms > 0 ? (learnedTerms / totalTerms) * 100 : 0
 
   // 퀴즈 점수 계산 - 당일 푼 전체 문제수가 분모, 정답 맞춘 총 개수가 분자
@@ -343,8 +375,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 날짜 선택 (AI 정보 탭에서만 표시) */}
-      {activeTab === 'ai' && (
+      {/* 날짜 선택 (AI 정보 탭과 진행률 탭에서 표시) */}
+      {(activeTab === 'ai' || activeTab === 'progress') && (
         <div className="flex justify-center mb-6 md:mb-8">
           <div className="glass backdrop-blur-xl rounded-2xl px-4 md:px-8 py-3 md:py-4 flex items-center gap-4 md:gap-6 shadow-xl border border-white/10">
             <FaCalendar className="w-5 h-5 md:w-6 md:h-6 text-blue-400" />

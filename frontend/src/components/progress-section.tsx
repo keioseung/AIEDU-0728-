@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { BarChart3, TrendingUp, BookOpen, Target, Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useUserStats } from '@/hooks/use-user-progress'
 import { userProgressAPI } from '@/lib/api'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 interface ProgressSectionProps {
   sessionId: string
@@ -36,6 +36,7 @@ function ProgressSection({ sessionId, selectedDate, onDateChange }: ProgressSect
   const [customEndDate, setCustomEndDate] = useState('')
 
   const { data: stats } = useUserStats(sessionId)
+  const queryClient = useQueryClient()
 
   // 기간별 데이터 계산
   const getPeriodDates = () => {
@@ -93,6 +94,15 @@ function ProgressSection({ sessionId, selectedDate, onDateChange }: ProgressSect
     onDateChange?.(date)
   }
 
+  // selectedDate가 변경될 때 데이터 리페치
+  useEffect(() => {
+    if (selectedDate) {
+      console.log('진행률 탭 - selectedDate 변경됨:', selectedDate)
+      // 쿼리 무효화하여 데이터 새로고침
+      queryClient.invalidateQueries({ queryKey: ['period-stats', sessionId] })
+    }
+  }, [selectedDate, sessionId, queryClient])
+
   // 기간 변경 핸들러
   const handlePeriodChange = (type: 'week' | 'month' | 'custom') => {
     console.log('진행률 탭 - 기간 변경:', type)
@@ -146,33 +156,8 @@ function ProgressSection({ sessionId, selectedDate, onDateChange }: ProgressSect
 
   return (
     <div className="space-y-8 relative">
-      {/* 날짜 및 기간 선택 */}
+      {/* 기간 선택 */}
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between relative z-10">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-white/70" />
-            <label htmlFor="progress-date" className="text-white/80 text-sm font-medium">
-              선택 날짜:
-            </label>
-            <input
-              id="progress-date"
-              type="date"
-              value={selectedDate || new Date().toISOString().split('T')[0]}
-              onChange={(e) => {
-                handleDateChange(e.target.value)
-              }}
-              className="bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer touch-manipulation relative z-20"
-              style={{ 
-                colorScheme: 'dark',
-                minHeight: '44px',
-                WebkitAppearance: 'none',
-                MozAppearance: 'none',
-                position: 'relative',
-                zIndex: 9999
-              }}
-            />
-          </div>
-        </div>
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
