@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation'
 
 import { useQueryClient } from '@tanstack/react-query'
 import { userProgressAPI } from '@/lib/api'
+import { getKSTDate, isToday, toKSTDateString } from '@/lib/utils'
 
 // 예시 용어 데이터
 const TERMS = [
@@ -72,8 +73,7 @@ function WeeklyBarGraph({ weeklyData }: { weeklyData: any[] }) {
 
 export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState(() => {
-    const today = new Date()
-    return today.toISOString().split('T')[0]
+    return getKSTDate()
   })
   const [sessionId] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -224,7 +224,7 @@ export default function DashboardPage() {
   const maxStreak = Array.isArray(userProgress?.max_streak) ? userProgress.max_streak.length : (userProgress?.max_streak ?? 0)
   const streakProgress = maxStreak > 0 ? (streakDays / maxStreak) * 100 : 0
 
-  // 오늘 날짜 확인
+  // 오늘 날짜 확인 (KST 기준)
   const today = new Date()
   const todayDay = today.getDay() // 0: 일요일, 1: 월요일, ..., 6: 토요일
 
@@ -244,7 +244,7 @@ export default function DashboardPage() {
   };
   const weeklyDates = getWeeklyDates();
   const weeklyData = weeklyDates.map((dateObj, idx) => {
-    const dateStr = dateObj.toISOString().split('T')[0];
+    const dateStr = toKSTDateString(dateObj);
     // AI 정보, 용어, 퀴즈 데이터 추출 (userProgress 기준)
     const ai = Array.isArray(userProgress?.[dateStr]) ? userProgress[dateStr].length : 0;
     const termsArr =
@@ -388,7 +388,7 @@ export default function DashboardPage() {
               style={{ minWidth: 140, maxWidth: 180 }} 
             />
             <span className="px-2 md:px-3 py-1 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 text-white font-bold text-xs md:text-sm shadow">
-              {selectedDate === new Date().toISOString().split('T')[0] ? '오늘' : selectedDate}
+              {isToday(selectedDate) ? '오늘' : selectedDate}
             </span>
           </div>
         </div>

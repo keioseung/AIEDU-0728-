@@ -6,6 +6,7 @@ import { BarChart3, TrendingUp, BookOpen, Target, Calendar, ChevronLeft, Chevron
 import { useUserStats } from '@/hooks/use-user-progress'
 import { userProgressAPI } from '@/lib/api'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { getKSTDate, toKSTDateString } from '@/lib/utils'
 
 interface ProgressSectionProps {
   sessionId: string
@@ -38,7 +39,7 @@ function ProgressSection({ sessionId, selectedDate, onDateChange }: ProgressSect
   const { data: stats } = useUserStats(sessionId)
   const queryClient = useQueryClient()
 
-  // 기간별 데이터 계산
+  // 기간별 데이터 계산 (KST 기준)
   const getPeriodDates = () => {
     const today = new Date()
     const startDate = new Date()
@@ -59,8 +60,8 @@ function ProgressSection({ sessionId, selectedDate, onDateChange }: ProgressSect
     }
     
     return {
-      start: startDate.toISOString().split('T')[0],
-      end: today.toISOString().split('T')[0]
+      start: toKSTDateString(startDate),
+      end: getKSTDate()
     }
   }
 
@@ -127,8 +128,8 @@ function ProgressSection({ sessionId, selectedDate, onDateChange }: ProgressSect
       const today = new Date()
       const weekAgo = new Date()
       weekAgo.setDate(today.getDate() - 6)
-      setCustomStartDate(weekAgo.toISOString().split('T')[0])
-      setCustomEndDate(today.toISOString().split('T')[0])
+      setCustomStartDate(toKSTDateString(weekAgo))
+      setCustomEndDate(getKSTDate())
     }
   }
 
@@ -162,7 +163,7 @@ function ProgressSection({ sessionId, selectedDate, onDateChange }: ProgressSect
             const endDate = new Date(periodDates.end)
             
             for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-              const dateStr = d.toISOString().split('T')[0]
+              const dateStr = toKSTDateString(d)
               const localProgress = userData[dateStr] || []
               const localTerms = userData.terms_by_date?.[dateStr] || []
               

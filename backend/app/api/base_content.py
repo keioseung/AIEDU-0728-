@@ -33,7 +33,8 @@ def get_all_base_contents(db: Session = Depends(get_db)):
                 created_at = content.created_at
                 if created_at is None:
                     from datetime import datetime
-                    created_at = datetime.now()
+from ..utils import get_kst_now
+created_at = get_kst_now()
                     logger.warning(f"Content {content.id} has None created_at, using current time")
                 
                 content_dict = {
