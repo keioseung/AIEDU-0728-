@@ -577,7 +577,14 @@ def check_achievements(session_id: str, db: Session = Depends(get_db)):
 def get_period_stats(session_id: str, start_date: str, end_date: str, db: Session = Depends(get_db)):
     """특정 기간의 학습 통계를 가져옵니다."""
     from datetime import datetime, timedelta
-    from ..utils import get_kst_date, get_kst_now
+    try:
+        from ..utils import get_kst_date, get_kst_now
+    except ImportError:
+        # utils 모듈이 없을 경우 기본 datetime 사용
+        def get_kst_date():
+            return datetime.now().strftime('%Y-%m-%d')
+        def get_kst_now():
+            return datetime.now()
     
     try:
         start_dt = datetime.strptime(start_date, '%Y-%m-%d')
@@ -668,7 +675,14 @@ def get_period_stats(session_id: str, start_date: str, end_date: str, db: Sessio
 def get_user_stats(session_id: str, db: Session = Depends(get_db)):
     """사용자 통계 정보를 조회합니다 (대시보드용)"""
     from datetime import datetime, timedelta
-    from ..utils import get_kst_date, get_kst_now
+    try:
+        from ..utils import get_kst_date, get_kst_now
+    except ImportError:
+        # utils 모듈이 없을 경우 기본 datetime 사용
+        def get_kst_date():
+            return datetime.now().strftime('%Y-%m-%d')
+        def get_kst_now():
+            return datetime.now()
     
     today = get_kst_date()
     

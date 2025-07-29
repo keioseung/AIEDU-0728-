@@ -34,8 +34,11 @@ def get_all_prompts(db: Session = Depends(get_db)):
                 created_at = prompt.created_at
                 if created_at is None:
                     from datetime import datetime
-from ..utils import get_kst_now
-created_at = get_kst_now()
+try:
+    from ..utils import get_kst_now
+    created_at = get_kst_now()
+except ImportError:
+    created_at = datetime.now()
                     logger.warning(f"Prompt {prompt.id} has None created_at, using current time")
                 
                 prompt_dict = {
