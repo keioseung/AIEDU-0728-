@@ -106,7 +106,7 @@ class PromptResponse(BaseModel):
     title: str
     content: str
     category: str
-    created_at: datetime
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

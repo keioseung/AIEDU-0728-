@@ -21,7 +21,39 @@ def get_all_prompts(db: Session = Depends(get_db)):
         logger.info("Getting all prompts...")
         prompts = db.query(Prompt).order_by(Prompt.created_at.desc()).all()
         logger.info(f"Found {len(prompts)} prompts")
-        return prompts
+        
+        # 각 항목의 데이터 타입 확인
+        for i, prompt in enumerate(prompts):
+            logger.info(f"Prompt {i+1}: id={prompt.id}, title={prompt.title}, created_at={prompt.created_at} (type: {type(prompt.created_at)})")
+        
+        # 응답 직렬화 테스트
+        try:
+            response_data = []
+            for prompt in prompts:
+                # created_at이 None인 경우 현재 시간으로 설정
+                created_at = prompt.created_at
+                if created_at is None:
+                    from datetime import datetime
+                    created_at = datetime.now()
+                    logger.warning(f"Prompt {prompt.id} has None created_at, using current time")
+                
+                prompt_dict = {
+                    "id": prompt.id,
+                    "title": prompt.title,
+                    "content": prompt.content,
+                    "category": prompt.category,
+                    "created_at": created_at
+                }
+                response_data.append(prompt_dict)
+                logger.info(f"Serialized prompt {prompt.id} successfully")
+            
+            logger.info("All prompts serialized successfully")
+            return prompts
+        except Exception as serialize_error:
+            logger.error(f"Serialization error: {serialize_error}")
+            logger.error(f"Serialization traceback: {traceback.format_exc()}")
+            raise HTTPException(status_code=500, detail=f"Serialization error: {str(serialize_error)}")
+            
     except Exception as e:
         logger.error(f"Error getting prompts: {e}")
         logger.error(f"Traceback: {traceback.format_exc()}")
