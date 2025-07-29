@@ -127,16 +127,58 @@ function ProgressSection({ sessionId, selectedDate, onDateChange }: ProgressSect
     setCustomEndDate(date)
   }
 
-  // 그래프 데이터 준비 - 중복 제거 및 정렬
+  // 그래프 데이터 준비 - 백엔드 데이터와 로컬 데이터 통합
   const chartData = periodStats?.period_data || []
   
-  // 날짜별로 중복 제거하고 정렬
-  const uniqueChartData = chartData.reduce((acc: PeriodData[], current: PeriodData) => {
+  // 로컬 스토리지에서 AI 정보 학습 데이터 가져오기
+  const localAIProgress = (() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('userProgress')
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          const userData = parsed[sessionId]
+          if (userData) {
+            const localData: PeriodData[] = []
+            
+            // 기간 내 모든 날짜에 대해 로컬 데이터 확인
+            const startDate = new Date(periodDates.start)
+            const endDate = new Date(periodDates.end)
+            
+            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+              const dateStr = d.toISOString().split('T')[0]
+              const localProgress = userData[dateStr] || []
+              const localTerms = userData.terms_by_date?.[dateStr] || []
+              
+              localData.push({
+                date: dateStr,
+                ai_info: localProgress.length,
+                terms: localTerms.length,
+                quiz_score: 0,
+                quiz_correct: 0,
+                quiz_total: 0
+              })
+            }
+            return localData
+          }
+        }
+      } catch (error) {
+        console.error('Failed to parse local progress:', error)
+      }
+    }
+    return []
+  })()
+  
+  // 백엔드 데이터와 로컬 데이터 통합
+  const combinedData = [...chartData, ...localAIProgress]
+  
+  // 날짜별로 중복 제거하고 정렬 (로컬 데이터 우선)
+  const uniqueChartData = combinedData.reduce((acc: PeriodData[], current: PeriodData) => {
     const existingIndex = acc.findIndex(item => item.date === current.date)
     if (existingIndex === -1) {
       acc.push(current)
     } else {
-      // 중복된 날짜가 있으면 더 높은 값을 사용
+      // 중복된 날짜가 있으면 더 높은 값을 사용 (로컬 데이터 우선)
       acc[existingIndex] = {
         ...acc[existingIndex],
         ai_info: Math.max(acc[existingIndex].ai_info, current.ai_info),

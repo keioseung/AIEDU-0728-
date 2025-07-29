@@ -416,12 +416,6 @@ export default function DashboardPage() {
             </button>
           ))}
         </div>
-        <button 
-          onClick={handleRefresh} 
-          className="ml-3 md:ml-6 px-3 md:px-4 py-2 bg-white/20 backdrop-blur-xl text-white rounded-lg hover:bg-white/30 transition-all font-semibold shadow border border-white/10"
-        >
-          새로고침
-        </button>
       </div>
 
       {/* 메인 컨텐츠 */}

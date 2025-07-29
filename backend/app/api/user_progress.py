@@ -594,20 +594,16 @@ def get_period_stats(session_id: str, start_date: str, end_date: str, db: Sessio
     period_data = []
     
     for date in date_list:
-        # AI 정보 학습 수
-        ai_progress = db.query(UserProgress).filter(
+        # AI 정보 학습 수 - 해당 날짜에 학습한 AI 정보 개수
+        ai_progress_list = db.query(UserProgress).filter(
             UserProgress.session_id == session_id,
-            UserProgress.date == date
-        ).first()
+            UserProgress.date == date,
+            UserProgress.info_index.isnot(None)  # AI 정보 학습 기록만
+        ).all()
         
-        ai_count = 0
-        if ai_progress and ai_progress.learned_info:
-            try:
-                ai_count = len(json.loads(ai_progress.learned_info))
-            except json.JSONDecodeError:
-                pass
+        ai_count = len(ai_progress_list)  # 해당 날짜에 학습한 AI 정보 개수
         
-        # 용어 학습 수 - 날짜별로 그룹핑하여 중복 제거
+        # 용어 학습 수 - 해당 날짜에 학습한 용어 개수
         terms_progress = db.query(UserProgress).filter(
             UserProgress.session_id == session_id,
             UserProgress.date.like(f'__terms__{date}%')
@@ -620,7 +616,10 @@ def get_period_stats(session_id: str, start_date: str, end_date: str, db: Sessio
             if term_progress.learned_info:
                 try:
                     terms = json.loads(term_progress.learned_info)
-                    unique_terms.update(terms)  # 중복 제거
+                    if isinstance(terms, list):
+                        unique_terms.update(terms)  # 중복 제거
+                    elif isinstance(terms, dict) and 'terms' in terms:
+                        unique_terms.update(terms['terms'])  # term-progress 형식
                 except json.JSONDecodeError:
                     continue
         
