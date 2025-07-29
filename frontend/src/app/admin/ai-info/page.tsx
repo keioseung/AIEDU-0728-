@@ -51,6 +51,7 @@ export default function AdminAIInfoPage() {
   const [baseTitle, setBaseTitle] = useState('')
   const [baseContent, setBaseContent] = useState('')
   const [baseEditId, setBaseEditId] = useState<number | null>(null)
+  const [showBaseContent, setShowBaseContent] = useState<number | null>(null)
 
   // 프롬프트+기반내용 합치기 상태
   const [selectedPromptId, setSelectedPromptId] = useState<number | null>(null)
@@ -983,6 +984,12 @@ export default function AdminAIInfoPage() {
                     <div className="font-bold text-lg text-white">{b.title}</div>
                     <div className="flex gap-2">
                       <button 
+                        onClick={() => setShowBaseContent(showBaseContent === b.id ? null : b.id)} 
+                        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition flex items-center gap-2"
+                      >
+                        {showBaseContent === b.id ? '내용 숨기기' : '내용 보기'}
+                      </button>
+                      <button 
                         onClick={() => handleBaseEdit(b)} 
                         className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-medium transition flex items-center gap-2"
                       >
@@ -998,7 +1005,9 @@ export default function AdminAIInfoPage() {
                       </button>
                     </div>
                   </div>
-                  <div className="text-white/70 text-sm whitespace-pre-line bg-white/5 rounded-lg p-4">{b.content}</div>
+                  {showBaseContent === b.id && (
+                    <div className="text-white/70 text-sm whitespace-pre-line bg-white/5 rounded-lg p-4 mb-4">{b.content}</div>
+                  )}
                   <div className="text-white/50 text-xs mt-2">
                     생성일: {new Date(b.created_at).toLocaleDateString('ko-KR')}
                   </div>
