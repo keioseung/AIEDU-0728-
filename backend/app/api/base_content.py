@@ -20,7 +20,39 @@ def get_all_base_contents(db: Session = Depends(get_db)):
         logger.info("Getting all base contents...")
         contents = db.query(BaseContent).order_by(BaseContent.created_at.desc()).all()
         logger.info(f"Found {len(contents)} base contents")
-        return contents
+        
+        # 각 항목의 데이터 타입 확인
+        for i, content in enumerate(contents):
+            logger.info(f"Content {i+1}: id={content.id}, title={content.title}, created_at={content.created_at} (type: {type(content.created_at)})")
+        
+        # 응답 직렬화 테스트
+        try:
+            response_data = []
+            for content in contents:
+                # created_at이 None인 경우 현재 시간으로 설정
+                created_at = content.created_at
+                if created_at is None:
+                    from datetime import datetime
+                    created_at = datetime.now()
+                    logger.warning(f"Content {content.id} has None created_at, using current time")
+                
+                content_dict = {
+                    "id": content.id,
+                    "title": content.title,
+                    "content": content.content,
+                    "category": content.category,
+                    "created_at": created_at
+                }
+                response_data.append(content_dict)
+                logger.info(f"Serialized content {content.id} successfully")
+            
+            logger.info("All contents serialized successfully")
+            return contents
+        except Exception as serialize_error:
+            logger.error(f"Serialization error: {serialize_error}")
+            logger.error(f"Serialization traceback: {traceback.format_exc()}")
+            raise HTTPException(status_code=500, detail=f"Serialization error: {str(serialize_error)}")
+            
     except Exception as e:
         logger.error(f"Error getting base contents: {e}")
         logger.error(f"Traceback: {traceback.format_exc()}")

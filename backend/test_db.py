@@ -25,17 +25,27 @@ try:
         result = connection.execute(text("SELECT * FROM prompt LIMIT 1"))
         print("Prompt table exists and accessible!")
         
-        # 테이블 구조 확인
+        # base_content 테이블 확인
+        result = connection.execute(text("SELECT * FROM base_content LIMIT 1"))
+        print("Base content table exists and accessible!")
+        
+        # base_content 테이블 구조 확인
         result = connection.execute(text("""
             SELECT column_name, data_type, is_nullable 
             FROM information_schema.columns 
-            WHERE table_name = 'prompt'
+            WHERE table_name = 'base_content'
             ORDER BY ordinal_position
         """))
         
-        print("\nPrompt table structure:")
+        print("\nBase content table structure:")
         for row in result:
             print(f"  {row[0]}: {row[1]} (nullable: {row[2]})")
+        
+        # base_content 데이터 확인
+        result = connection.execute(text("SELECT id, title, created_at FROM base_content ORDER BY id"))
+        print("\nBase content data:")
+        for row in result:
+            print(f"  ID: {row[0]}, Title: {row[1]}, Created: {row[2]} (type: {type(row[2])})")
             
 except Exception as e:
     print(f"Database connection failed: {e}")
