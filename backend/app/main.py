@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
 
-from .api import ai_info, quiz, prompt, base_content, term, auth, logs, system
+from .api import ai_info, quiz, prompt, base_content, term, auth, logs, system, user_progress
 
 app = FastAPI()
 
@@ -87,6 +87,7 @@ async def not_found_handler(request: Request, exc: HTTPException):
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(logs.router, prefix="/api/logs", tags=["Activity Logs"])
 app.include_router(system.router, prefix="/api/system", tags=["System Management"])
+app.include_router(user_progress.router, prefix="/api/user-progress", tags=["User Progress"])
 app.include_router(ai_info.router, prefix="/api/ai-info")
 app.include_router(quiz.router, prefix="/api/quiz")
 app.include_router(prompt.router, prefix="/api/prompt")

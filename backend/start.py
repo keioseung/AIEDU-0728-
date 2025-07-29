@@ -69,26 +69,23 @@ def main():
     
     print(f"🌐 서버 시작: {host}:{port}")
     
-    # Railway 환경에서는 reload 비활성화
-    reload_option = "--reload" if os.getenv("ENVIRONMENT") == "development" else "--no-reload"
-    
     # uvicorn으로 서버 시작
     try:
-        os.execvp("uvicorn", [
-            "uvicorn",
+        # 방법 1: python -m uvicorn 사용
+        os.execvp("python", [
+            "python", "-m", "uvicorn",
             "app.main:app",
             "--host", host,
             "--port", port,
             "--access-log",
-            "--log-level", "info",
-            reload_option
+            "--log-level", "info"
         ])
     except Exception as e:
         print(f"❌ 서버 시작 실패: {e}")
-        # 마지막 시도: python -m uvicorn
+        # 방법 2: 직접 uvicorn 실행
         try:
-            os.execvp("python", [
-                "python", "-m", "uvicorn",
+            os.execvp("uvicorn", [
+                "uvicorn",
                 "app.main:app",
                 "--host", host,
                 "--port", port,
