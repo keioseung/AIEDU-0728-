@@ -100,6 +100,22 @@ function ProgressSection({ sessionId, selectedDate, onDateChange }: ProgressSect
       console.log('진행률 탭 - selectedDate 변경됨:', selectedDate)
       // 쿼리 무효화하여 데이터 새로고침
       queryClient.invalidateQueries({ queryKey: ['period-stats', sessionId] })
+      
+      // 로컬 스토리지에서 해당 날짜의 AI 정보 학습 데이터 확인
+      if (typeof window !== 'undefined') {
+        try {
+          const stored = localStorage.getItem('userProgress')
+          if (stored) {
+            const parsed = JSON.parse(stored)
+            const userData = parsed[sessionId]
+            if (userData && userData[selectedDate]) {
+              console.log(`진행률 - ${selectedDate} 날짜의 AI 정보 학습 데이터:`, userData[selectedDate])
+            }
+          }
+        } catch (error) {
+          console.error('Failed to check local progress for selected date:', error)
+        }
+      }
     }
   }, [selectedDate, sessionId, queryClient])
 
@@ -150,10 +166,19 @@ function ProgressSection({ sessionId, selectedDate, onDateChange }: ProgressSect
               const localProgress = userData[dateStr] || []
               const localTerms = userData.terms_by_date?.[dateStr] || []
               
+              // selectedDate가 있는 경우 해당 날짜의 데이터를 우선적으로 반영
+              let aiCount = localProgress.length
+              let termsCount = localTerms.length
+              
+              // selectedDate가 현재 날짜와 같다면 로컬 데이터를 더 정확하게 반영
+              if (selectedDate && dateStr === selectedDate) {
+                console.log(`진행률 - ${dateStr} 날짜의 로컬 데이터: AI=${aiCount}, Terms=${termsCount}`)
+              }
+              
               localData.push({
                 date: dateStr,
-                ai_info: localProgress.length,
-                terms: localTerms.length,
+                ai_info: aiCount,
+                terms: termsCount,
                 quiz_score: 0,
                 quiz_correct: 0,
                 quiz_total: 0

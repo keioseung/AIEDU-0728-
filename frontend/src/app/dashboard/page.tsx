@@ -483,6 +483,7 @@ export default function DashboardPage() {
                 sessionId={sessionId} 
                 selectedDate={selectedDate}
                 onDateChange={setSelectedDate}
+                key={`progress-${selectedDate}`} // selectedDate가 변경될 때 컴포넌트 재마운트
               />
             </section>
           )}
