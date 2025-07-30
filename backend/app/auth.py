@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 from .database import get_db
 from .models import User
-from .utils import get_kst_datetime
+from .utils import get_utc_now
 
 load_dotenv()
 
@@ -30,19 +30,25 @@ def get_password_hash(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    """JWT 액세스 토큰 생성 - KST 시간대 사용"""
-    to_encode = data.copy()
-    if expires_delta:
-        # KST 시간대 기준으로 만료 시간 계산
-        expire = get_kst_datetime() + expires_delta
-    else:
-        expire = get_kst_datetime() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    
-    # UTC로 변환하여 JWT에 저장 (JWT 표준)
-    expire_utc = expire.astimezone(datetime.timezone.utc)
-    to_encode.update({"exp": expire_utc})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    """JWT 액세스 토큰 생성 - UTC 시간 사용"""
+    try:
+        to_encode = data.copy()
+        if expires_delta:
+            # UTC 시간 기준으로 만료 시간 계산
+            expire = get_utc_now() + expires_delta
+        else:
+            expire = get_utc_now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        
+        print(f"🔐 JWT 토큰 생성 - 만료시간: {expire.isoformat()}")
+        print(f"🔐 JWT 토큰 생성 - 데이터: {to_encode}")
+        
+        to_encode.update({"exp": expire})
+        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        print(f"🔐 JWT 토큰 생성 완료 - 길이: {len(encoded_jwt)}")
+        return encoded_jwt
+    except Exception as e:
+        print(f"❌ JWT 토큰 생성 실패: {str(e)}")
+        raise e
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """JWT 토큰 검증"""

@@ -8,7 +8,7 @@ import sys
 from ..database import get_db
 from ..models import Prompt
 from ..schemas import PromptCreate, PromptResponse
-from ..utils import get_kst_datetime
+from ..utils import get_utc_now
 
 router = APIRouter()
 
@@ -34,7 +34,7 @@ def get_all_prompts(db: Session = Depends(get_db)):
                 # created_at이 None인 경우 현재 시간으로 설정
                 created_at = prompt.created_at
                 if created_at is None:
-                    created_at = get_kst_datetime()
+                    created_at = get_utc_now()
                     logger.warning(f"Prompt {prompt.id} has None created_at, using current time")
                 
                 prompt_dict = {
@@ -94,7 +94,7 @@ def add_prompt(prompt_data: PromptCreate, db: Session = Depends(get_db)):
                 title=prompt_data.title.strip(),
                 content=prompt_data.content.strip(),
                 category=prompt_data.category.strip(),
-                created_at=get_kst_datetime()
+                created_at=get_utc_now()
             )
             logger.info(f"Created Prompt object: {db_prompt}")
         except Exception as create_error:

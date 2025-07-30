@@ -31,7 +31,7 @@ def get_kst_date():
     return now.strftime('%Y-%m-%d')
 
 def get_kst_datetime():
-    """현재 KST datetime 객체를 반환합니다."""
+    """현재 KST datetime 객체를 반환합니다. (timezone 정보 포함)"""
     if PYTZ_AVAILABLE:
         kst = pytz.timezone('Asia/Seoul')
         return datetime.now(kst)
@@ -40,6 +40,10 @@ def get_kst_datetime():
         utc_now = datetime.now(timezone.utc)
         kst_offset = timezone(timedelta(hours=9))
         return utc_now.astimezone(kst_offset)
+
+def get_utc_now():
+    """현재 UTC 시간을 반환합니다. (JWT 토큰용)"""
+    return datetime.now(timezone.utc)
 
 def to_kst_date(date_obj):
     """Date 객체를 KST 날짜 문자열로 변환합니다."""

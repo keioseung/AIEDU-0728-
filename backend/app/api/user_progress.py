@@ -7,7 +7,7 @@ from ..database import get_db
 from ..models import UserProgress
 from ..schemas import UserProgressCreate, UserProgressResponse
 from ..log_utils import log_activity
-from ..utils import get_kst_date, get_kst_datetime
+from ..utils import get_kst_date, get_utc_now
 
 router = APIRouter()
 

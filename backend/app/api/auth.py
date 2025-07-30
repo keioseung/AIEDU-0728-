@@ -59,40 +59,69 @@ def register_user(user_data: UserCreate, request: Request, db: Session = Depends
 @router.post("/login", response_model=Token)
 def login_user(user_credentials: UserLogin, request: Request, db: Session = Depends(get_db)):
     """사용자 로그인"""
-    # 사용자 확인
-    user = db.query(User).filter(User.username == user_credentials.username).first()
-    if not user or not verify_password(user_credentials.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
+    try:
+        print(f"🔐 로그인 시도 - 사용자명: {user_credentials.username}")
+        
+        # 사용자 확인
+        user = db.query(User).filter(User.username == user_credentials.username).first()
+        if not user:
+            print(f"❌ 사용자 없음: {user_credentials.username}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        if not verify_password(user_credentials.password, user.hashed_password):
+            print(f"❌ 비밀번호 불일치: {user_credentials.username}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        print(f"✅ 사용자 인증 성공: {user.username} (역할: {user.role})")
+        
+        # is_active 필드는 Supabase 테이블에 없으므로 제거
+        
+        # 액세스 토큰 생성 (30일)
+        access_token_expires = timedelta(minutes=30 * 24 * 60)
+        print(f"🔐 토큰 생성 시작 - 만료시간: {access_token_expires}")
+        
+        access_token = create_access_token(
+            data={"sub": user.username}, expires_delta=access_token_expires
         )
-    
-    # is_active 필드는 Supabase 테이블에 없으므로 제거
-    
-    # 액세스 토큰 생성 (30일)
-    access_token_expires = timedelta(minutes=30 * 24 * 60)
-    access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
-    )
-    
-    # 로그인 로그 기록
-    log_activity(
-        db=db,
-        action="로그인",
-        details=f"사용자가 성공적으로 로그인했습니다. 역할: {user.role}",
-        log_type="user",
-        log_level="success",
-        user_id=user.id,
-        username=user.username,
-        ip_address=request.client.host if request.client else None
-    )
-    
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user": user
-    }
+        
+        print(f"✅ 토큰 생성 완료 - 길이: {len(access_token)}")
+        
+        # 로그인 로그 기록
+        log_activity(
+            db=db,
+            action="로그인",
+            details=f"사용자가 성공적으로 로그인했습니다. 역할: {user.role}",
+            log_type="user",
+            log_level="success",
+            user_id=user.id,
+            username=user.username,
+            ip_address=request.client.host if request.client else None
+        )
+        
+        print(f"✅ 로그인 완료: {user.username}")
+        
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": user
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ 로그인 중 예외 발생: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Login failed: {str(e)}"
+        )
 
 @router.get("/me", response_model=UserResponse)
 def get_current_user_info(current_user: User = Depends(get_current_active_user)):

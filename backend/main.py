@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from datetime import datetime
 import os
 
-from app.utils import get_kst_datetime
+from app.utils import get_utc_now
 
 # API 모듈들을 개별적으로 import하여 순환 import 문제 방지
 app = FastAPI()
@@ -95,9 +95,9 @@ async def health_check():
         # 데이터베이스 연결 테스트
         with engine.connect() as conn:
             result = conn.execute("SELECT 1")
-        return {"status": "healthy", "database": "connected", "timestamp": "2024-01-01T00:00:00Z"}
+        return {"status": "healthy", "database": "connected", "timestamp": get_utc_now().isoformat()}
     except Exception as e:
-        return {"status": "unhealthy", "database": "disconnected", "error": str(e), "timestamp": "2024-01-01T00:00:00Z"}
+        return {"status": "unhealthy", "database": "disconnected", "error": str(e), "timestamp": get_utc_now().isoformat()}
 
 @app.get("/debug/routes")
 async def debug_routes():
@@ -121,13 +121,13 @@ async def options_handler(path: str):
 @app.middleware("http")
 async def log_requests(request, call_next):
     """모든 요청을 로깅하는 미들웨어"""
-    start_time = get_kst_datetime()
+    start_time = get_utc_now()
     print(f"📥 요청: {request.method} {request.url}")
     print(f"🔐 헤더 Authorization: {'있음' if request.headers.get('authorization') else '없음'}")
     
     response = await call_next(request)
     
-    process_time = (get_kst_datetime() - start_time).total_seconds()
+    process_time = (get_utc_now() - start_time).total_seconds()
     print(f"📤 응답: {response.status_code} ({process_time:.3f}s)")
     
     return response

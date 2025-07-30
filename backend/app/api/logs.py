@@ -8,7 +8,7 @@ from ..database import get_db
 from ..models import ActivityLog, User
 from ..auth import get_current_active_user
 from ..log_utils import log_activity
-from ..utils import get_kst_datetime
+from ..utils import get_utc_now
 
 router = APIRouter()
 
@@ -153,7 +153,7 @@ def test_logs_api():
     return {
         "status": "success",
         "message": "로그 API가 정상 작동 중입니다",
-        "timestamp": get_kst_datetime().isoformat(),
+        "timestamp": get_utc_now().isoformat(),
         "available_endpoints": [
             "GET /api/logs - 로그 조회 (admin 권한 필요)",
             "GET /api/logs/stats - 로그 통계 (admin 권한 필요)",
@@ -239,7 +239,7 @@ def get_log_stats(
     security_logs = db.query(ActivityLog).filter(ActivityLog.log_type == 'security').count()
     
     # 오늘 로그 수
-    today = get_kst_datetime().replace(hour=0, minute=0, second=0, microsecond=0)
+    today = get_utc_now().replace(hour=0, minute=0, second=0, microsecond=0)
     today_logs = db.query(ActivityLog).filter(ActivityLog.created_at >= today).count()
     
     return {
