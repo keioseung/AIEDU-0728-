@@ -5,8 +5,64 @@ from datetime import datetime
 import os
 
 # API 모듈들을 개별적으로 import하여 순환 import 문제 방지
-
 app = FastAPI()
+
+# API 모듈들을 지연 import로 처리
+def include_routers():
+    """API 라우터들을 안전하게 등록하는 함수"""
+    try:
+        from app.api import auth
+        app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+    except Exception as e:
+        print(f"⚠️ auth 라우터 등록 실패: {e}")
+    
+    try:
+        from app.api import logs
+        app.include_router(logs.router, prefix="/api/logs", tags=["Activity Logs"])
+    except Exception as e:
+        print(f"⚠️ logs 라우터 등록 실패: {e}")
+    
+    try:
+        from app.api import system
+        app.include_router(system.router, prefix="/api/system", tags=["System Management"])
+    except Exception as e:
+        print(f"⚠️ system 라우터 등록 실패: {e}")
+    
+    try:
+        from app.api import user_progress
+        app.include_router(user_progress.router, prefix="/api/user-progress", tags=["User Progress"])
+    except Exception as e:
+        print(f"⚠️ user_progress 라우터 등록 실패: {e}")
+    
+    try:
+        from app.api import ai_info
+        app.include_router(ai_info.router, prefix="/api/ai-info")
+    except Exception as e:
+        print(f"⚠️ ai_info 라우터 등록 실패: {e}")
+    
+    try:
+        from app.api import quiz
+        app.include_router(quiz.router, prefix="/api/quiz")
+    except Exception as e:
+        print(f"⚠️ quiz 라우터 등록 실패: {e}")
+    
+    try:
+        from app.api import prompt
+        app.include_router(prompt.router, prefix="/api/prompt")
+    except Exception as e:
+        print(f"⚠️ prompt 라우터 등록 실패: {e}")
+    
+    try:
+        from app.api import base_content
+        app.include_router(base_content.router, prefix="/api/base-content")
+    except Exception as e:
+        print(f"⚠️ base_content 라우터 등록 실패: {e}")
+    
+    try:
+        from app.api import term
+        app.include_router(term.router, prefix="/api/term")
+    except Exception as e:
+        print(f"⚠️ term 라우터 등록 실패: {e}")
 
 # CORS 설정 - Railway 배포 환경에 맞게 조정 (임시로 관대한 설정)
 app.add_middleware(
@@ -83,12 +139,5 @@ async def not_found_handler(request: Request, exc: HTTPException):
         content={"error": "Not found", "path": str(request.url)}
     )
 
-app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
-app.include_router(logs.router, prefix="/api/logs", tags=["Activity Logs"])
-app.include_router(system.router, prefix="/api/system", tags=["System Management"])
-app.include_router(user_progress.router, prefix="/api/user-progress", tags=["User Progress"])
-app.include_router(ai_info.router, prefix="/api/ai-info")
-app.include_router(quiz.router, prefix="/api/quiz")
-app.include_router(prompt.router, prefix="/api/prompt")
-app.include_router(base_content.router, prefix="/api/base-content")
-app.include_router(term.router, prefix="/api/term")
+# 라우터 등록
+include_routers()

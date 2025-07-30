@@ -5,7 +5,7 @@ from datetime import timedelta
 from ..database import get_db
 from ..models import User, ActivityLog
 from ..schemas import UserCreate, UserLogin, UserResponse, Token
-from ..auth import verify_password, get_password_hash, create_access_token, get_current_active_user, ACCESS_TOKEN_EXPIRE_MINUTES
+from ..auth import verify_password, get_password_hash, create_access_token, get_current_active_user
 from ..log_utils import log_activity
 
 router = APIRouter()
@@ -70,8 +70,8 @@ def login_user(user_credentials: UserLogin, request: Request, db: Session = Depe
     
     # is_active 필드는 Supabase 테이블에 없으므로 제거
     
-    # 액세스 토큰 생성
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    # 액세스 토큰 생성 (30일)
+    access_token_expires = timedelta(minutes=30 * 24 * 60)
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
