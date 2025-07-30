@@ -7,22 +7,64 @@ from .api import ai_info, quiz, prompt, base_content, term, auth, logs, system, 
 
 app = FastAPI()
 
-# Railway 배포 환경을 위한 CORS 설정
-origins = [
-    "http://localhost:3000",
-    "https://simple-production-b0b3.up.railway.app",
-    "https://simple-production-142c.up.railway.app",
-    "*"  # 모든 origin 허용 (개발 중)
-]
+# 환경 변수에서 CORS origins 가져오기
+def get_cors_origins():
+    # 환경 변수에서 origins 가져오기
+    cors_origins_env = os.getenv("CORS_ORIGINS", "")
+    if cors_origins_env:
+        return [origin.strip() for origin in cors_origins_env.split(",")]
+    
+    # 기본 origins (개발 환경용)
+    default_origins = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "https://simple-production-b0b3.up.railway.app",
+        "https://simple-production-142c.up.railway.app",
+    ]
+    
+    # Railway 환경에서 자동으로 프론트엔드 도메인 추가
+    railway_frontend_url = os.getenv("RAILWAY_FRONTEND_URL")
+    if railway_frontend_url:
+        default_origins.append(railway_frontend_url)
+    
+    # 개발 환경에서는 모든 origin 허용
+    if os.getenv("ENVIRONMENT", "development") == "development":
+        default_origins.append("*")
+    
+    return default_origins
+
+# CORS 설정
+origins = get_cors_origins()
+
+# CORS 설정 로그 출력
+print(f"🔧 CORS Origins 설정: {origins}")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
     expose_headers=["*"],
 )
+
+# 추가 CORS 헤더를 위한 미들웨어
+@app.middleware("http")
+async def add_cors_headers(request: Request, call_next):
+    response = await call_next(request)
+    
+    # CORS 헤더 추가
+    origin = request.headers.get("origin")
+    if origin:
+        response.headers["Access-Control-Allow-Origin"] = origin
+    else:
+        response.headers["Access-Control-Allow-Origin"] = "*"
+    
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    
+    return response
 
 # 헬스체크 엔드포인트
 @app.get("/")
@@ -64,9 +106,20 @@ async def health_check():
         }
 
 @app.options("/{path:path}")
-async def options_handler(path: str):
+async def options_handler(path: str, request: Request):
     """OPTIONS 요청을 명시적으로 처리"""
-    return {"message": "OK"}
+    origin = request.headers.get("origin", "*")
+    
+    return JSONResponse(
+        content={"message": "OK"},
+        headers={
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Max-Age": "86400",
+        }
+    )
 
 # 전역 예외 처리기
 @app.exception_handler(Exception)

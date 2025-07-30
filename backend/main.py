@@ -64,13 +64,20 @@ def include_routers():
     except Exception as e:
         print(f"⚠️ term 라우터 등록 실패: {e}")
 
-# CORS 설정 - Railway 배포 환경에 맞게 조정 (임시로 관대한 설정)
+# CORS 설정 - Railway 배포 환경에 맞게 조정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 임시로 모든 origin 허용
+    allow_origins=[
+        "https://simple-production-b0b3.up.railway.app",  # 프론트엔드 도메인
+        "http://localhost:3000",  # 로컬 개발용
+        "http://localhost:3001",  # 로컬 개발용
+        "http://127.0.0.1:3000",  # 로컬 개발용
+        "http://127.0.0.1:3001",  # 로컬 개발용
+        "*"  # 임시로 모든 origin 허용 (개발 중)
+    ],
     allow_credentials=True,
-    allow_methods=["*"],  # 모든 메서드 허용
-    allow_headers=["*"],  # 모든 헤더 허용
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=["*"],
     expose_headers=["*"],
 )
 
