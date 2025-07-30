@@ -7,6 +7,7 @@ import traceback
 from ..database import get_db
 from ..models import BaseContent
 from ..schemas import BaseContentCreate, BaseContentResponse
+from ..utils import get_kst_datetime
 
 router = APIRouter()
 
@@ -32,12 +33,7 @@ def get_all_base_contents(db: Session = Depends(get_db)):
                 # created_at이 None인 경우 현재 시간으로 설정
                 created_at = content.created_at
                 if created_at is None:
-                    from datetime import datetime
-try:
-    from ..utils import get_kst_now
-    created_at = get_kst_now()
-except ImportError:
-    created_at = datetime.now()
+                    created_at = get_kst_datetime()
                     logger.warning(f"Content {content.id} has None created_at, using current time")
                 
                 content_dict = {
@@ -87,7 +83,7 @@ def add_base_content(content_data: BaseContentCreate, db: Session = Depends(get_
             title=content_data.title.strip(),
             content=content_data.content.strip(),
             category=content_data.category.strip(),
-            created_at=datetime.now()
+            created_at=get_kst_datetime()
         )
         db.add(db_content)
         db.commit()

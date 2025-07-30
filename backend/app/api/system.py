@@ -11,6 +11,7 @@ from ..database import get_db
 from ..models import User, AIInfo, UserProgress, ActivityLog, BackupHistory, Quiz, Prompt, BaseContent, Term
 from ..auth import get_current_active_user
 from ..log_utils import log_activity
+from ..utils import get_kst_datetime
 
 router = APIRouter()
 
@@ -36,7 +37,7 @@ async def create_backup(
         
         backup_data = {
             "backup_info": {
-                "created_at": datetime.now().isoformat(),
+                "created_at": get_kst_datetime().isoformat(),
                 "created_by": current_user.username,
                 "description": description or "Manual backup",
                 "tables_included": include_tables,
@@ -77,7 +78,7 @@ async def create_backup(
                 backup_data["data"][table_name] = table_data
         
         # 백업 파일명 생성
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = get_kst_datetime().strftime("%Y%m%d_%H%M%S")
         filename = f"ai_mastery_backup_{timestamp}.json"
         
         # JSON 문자열 생성

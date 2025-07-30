@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 
 from .database import get_db
 from .models import User
+from .utils import get_kst_datetime
 
 load_dotenv()
 
@@ -29,13 +30,17 @@ def get_password_hash(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    """JWT 액세스 토큰 생성"""
+    """JWT 액세스 토큰 생성 - KST 시간대 사용"""
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        # KST 시간대 기준으로 만료 시간 계산
+        expire = get_kst_datetime() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
+        expire = get_kst_datetime() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    
+    # UTC로 변환하여 JWT에 저장 (JWT 표준)
+    expire_utc = expire.astimezone(datetime.timezone.utc)
+    to_encode.update({"exp": expire_utc})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 

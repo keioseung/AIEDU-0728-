@@ -7,6 +7,7 @@ from ..database import get_db
 from ..models import UserProgress
 from ..schemas import UserProgressCreate, UserProgressResponse
 from ..log_utils import log_activity
+from ..utils import get_kst_date, get_kst_datetime
 
 router = APIRouter()
 
@@ -231,8 +232,7 @@ def get_user_stats_legacy(session_id: str, db: Session = Depends(get_db)):
     ).first()
     
     # 오늘 날짜
-    from datetime import datetime
-    today = datetime.now().strftime('%Y-%m-%d')
+    today = get_kst_date()
     
     # 오늘 학습 데이터 가져오기
     today_ai_info = 0
@@ -406,8 +406,7 @@ def update_quiz_score(session_id: str, score_data: dict, request: Request, db: S
     quiz_score = int((score / total_questions) * 100) if total_questions > 0 else 0
     
     # 오늘 날짜
-    from datetime import datetime
-    today = datetime.now().strftime('%Y-%m-%d')
+    today = get_kst_date()
     
     # 오늘 퀴즈 세션 번호 찾기
     existing_quiz_sessions = db.query(UserProgress).filter(
@@ -674,10 +673,7 @@ def get_user_stats(session_id: str, db: Session = Depends(get_db)):
         from ..utils import get_kst_date, get_kst_now
     except ImportError:
         # utils 모듈이 없을 경우 기본 datetime 사용
-        def get_kst_date():
-            return datetime.now().strftime('%Y-%m-%d')
-        def get_kst_now():
-            return datetime.now()
+        # 이미 utils에서 import한 함수 사용
     
     today = get_kst_date()
     
