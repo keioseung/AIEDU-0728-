@@ -57,6 +57,25 @@ def main():
     print(f"🐍 Python 경로: {sys.executable}")
     print(f"🌍 환경변수 DATABASE_URL: {'설정됨' if os.getenv('DATABASE_URL') else '설정되지 않음'}")
     
+    # 디버깅: 파일 존재 확인
+    print(f"📄 main.py 존재: {os.path.exists('main.py')}")
+    print(f"📄 app/main.py 존재: {os.path.exists('app/main.py')}")
+    print(f"📄 app/__init__.py 존재: {os.path.exists('app/__init__.py')}")
+    
+    # 디버깅: Python 경로 확인
+    print(f"🐍 Python 경로: {sys.path}")
+    
+    # 디버깅: import 테스트
+    try:
+        print("🧪 Import 테스트 시작...")
+        import main
+        print("✅ main.py import 성공")
+    except Exception as e:
+        print(f"❌ main.py import 실패: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+    
     # 데이터베이스 초기화 시도 1: init_db.py 스크립트 실행
     if not run_database_init():
         print("🔄 대체 방법으로 테이블 생성 시도...")
@@ -74,7 +93,7 @@ def main():
         # 방법 1: python -m uvicorn 사용
         os.execvp("python", [
             "python", "-m", "uvicorn",
-            "app.main:app",
+            "main:app",
             "--host", host,
             "--port", port,
             "--access-log",
@@ -86,7 +105,7 @@ def main():
         try:
             os.execvp("uvicorn", [
                 "uvicorn",
-                "app.main:app",
+                "main:app",
                 "--host", host,
                 "--port", port,
                 "--access-log",

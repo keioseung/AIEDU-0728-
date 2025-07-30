@@ -3,10 +3,10 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 
 from ..database import get_db
-from ..models import User
+from ..models import User, ActivityLog
 from ..schemas import UserCreate, UserLogin, UserResponse, Token
 from ..auth import verify_password, get_password_hash, create_access_token, get_current_active_user, ACCESS_TOKEN_EXPIRE_MINUTES
-from .logs import log_activity
+from ..log_utils import log_activity
 
 router = APIRouter()
 

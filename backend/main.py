@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from datetime import datetime
 import os
 
-from app.api import ai_info, quiz, prompt, base_content, term, auth, logs, system, user_progress
+# API 모듈들을 개별적으로 import하여 순환 import 문제 방지
 
 app = FastAPI()
 

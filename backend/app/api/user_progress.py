@@ -6,7 +6,7 @@ import json
 from ..database import get_db
 from ..models import UserProgress
 from ..schemas import UserProgressCreate, UserProgressResponse
-from .logs import log_activity
+from ..log_utils import log_activity
 
 router = APIRouter()
 

@@ -10,7 +10,7 @@ import os
 from ..database import get_db
 from ..models import User, AIInfo, UserProgress, ActivityLog, BackupHistory, Quiz, Prompt, BaseContent, Term
 from ..auth import get_current_active_user
-from .logs import log_activity
+from ..log_utils import log_activity
 
 router = APIRouter()
 

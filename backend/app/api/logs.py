@@ -7,6 +7,7 @@ import json
 from ..database import get_db
 from ..models import ActivityLog, User
 from ..auth import get_current_active_user
+from ..log_utils import log_activity
 
 router = APIRouter()
 
@@ -291,36 +292,4 @@ def clear_logs(
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to clear logs: {str(e)}")
 
-# 로그 생성 헬퍼 함수
-def log_activity(
-    db: Session,
-    action: str,
-    details: str = "",
-    log_type: str = "user",
-    log_level: str = "info",
-    user_id: Optional[int] = None,
-    username: Optional[str] = None,
-    session_id: Optional[str] = None,
-    ip_address: Optional[str] = None
-):
-    """활동 로그를 생성하는 헬퍼 함수"""
-    try:
-        activity_log = ActivityLog(
-            user_id=user_id,
-            username=username,
-            action=action,
-            details=details,
-            log_type=log_type,
-            log_level=log_level,
-            session_id=session_id,
-            ip_address=ip_address
-        )
-        
-        db.add(activity_log)
-        db.commit()
-        return activity_log
-    
-    except Exception as e:
-        db.rollback()
-        print(f"Failed to create log: {str(e)}")
-        return None 
+# log_activity 함수는 이제 log_utils.py에서 import하여 사용 
